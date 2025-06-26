@@ -207,8 +207,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (data: any) => {
-    // Use the same UUID fallback logic if needed here
-    return { error: null };
+    return { error: null }; // Extend as needed
   };
 
   const switchRole = (role: UserRole) => {
