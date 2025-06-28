@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { supabase, testConnection, insertDemoProfiles } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
-import { CheckCircle, XCircle, AlertCircle, Database, Send, Eye, Trash2 } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, Database, Send, Eye, Trash2, Users, RefreshCw } from 'lucide-react';
 
 interface TestResult {
   test: string;
@@ -16,6 +16,7 @@ const DatabaseTest: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [testPost, setTestPost] = useState('');
   const [posts, setPosts] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
 
   const addResult = (test: string, status: 'success' | 'error' | 'warning', message: string, data?: any) => {
     setResults(prev => [...prev, { test, status, message, data }]);
@@ -26,16 +27,14 @@ const DatabaseTest: React.FC = () => {
     setLoading(true);
 
     try {
-      // Test 1: Database Connection
+      // Test 1: Basic Database Connection
       addResult('Database Connection', 'success', 'Testing Supabase connection...');
       
-      const { data: connectionTest, error: connectionError } = await supabase
-        .from('profiles')
-        .select('count')
-        .limit(1);
-
-      if (connectionError) {
-        addResult('Database Connection', 'error', `Connection failed: ${connectionError.message}`);
+      const connectionTest = await testConnection();
+      if (!connectionTest.success) {
+        addResult('Database Connection', 'error', `Connection failed: ${connectionTest.error}`);
+        setLoading(false);
+        return;
       } else {
         addResult('Database Connection', 'success', 'Successfully connected to Supabase');
       }
@@ -45,12 +44,29 @@ const DatabaseTest: React.FC = () => {
       if (session) {
         addResult('Authentication', 'success', `Authenticated as: ${session.user.email}`);
       } else if (user) {
-        addResult('Authentication', 'warning', `Using demo user: ${user.email}`);
+        addResult('Authentication', 'warning', `Using demo user: ${user.email} (ID: ${user.id})`);
       } else {
         addResult('Authentication', 'error', 'No user authenticated');
       }
 
-      // Test 3: Profile Data
+      // Test 3: Check Profiles Table
+      const { data: allProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (profilesError) {
+        addResult('Profiles Table', 'error', `Profiles table error: ${profilesError.message}`);
+      } else {
+        addResult('Profiles Table', 'success', `Found ${allProfiles?.length || 0} profiles in database`);
+        setProfiles(allProfiles || []);
+        
+        if (allProfiles && allProfiles.length === 0) {
+          addResult('Profiles Table', 'warning', 'Profiles table is empty - demo users not found');
+        }
+      }
+
+      // Test 4: Check Current User Profile
       if (user) {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -59,13 +75,13 @@ const DatabaseTest: React.FC = () => {
           .single();
 
         if (profileError) {
-          addResult('Profile Data', 'warning', `Profile not found in database: ${profileError.message}`);
+          addResult('Current User Profile', 'warning', `Profile not found in database: ${profileError.message}`);
         } else {
-          addResult('Profile Data', 'success', `Profile found: ${profile.full_name}`, profile);
+          addResult('Current User Profile', 'success', `Profile found: ${profile.full_name}`, profile);
         }
       }
 
-      // Test 4: Posts Table Structure
+      // Test 5: Posts Table Structure
       const { data: postsStructure, error: structureError } = await supabase
         .from('user_posts')
         .select('*')
@@ -77,7 +93,7 @@ const DatabaseTest: React.FC = () => {
         addResult('Posts Table', 'success', 'Posts table accessible');
       }
 
-      // Test 5: Fetch Existing Posts
+      // Test 6: Fetch Existing Posts
       const { data: existingPosts, error: fetchError } = await supabase
         .from('user_posts')
         .select(`
@@ -85,7 +101,7 @@ const DatabaseTest: React.FC = () => {
           profiles!user_posts_author_id_fkey(id, full_name, role, avatar_url)
         `)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
 
       if (fetchError) {
         addResult('Fetch Posts', 'error', `Failed to fetch posts: ${fetchError.message}`);
@@ -94,7 +110,7 @@ const DatabaseTest: React.FC = () => {
         setPosts(existingPosts || []);
       }
 
-      // Test 6: RLS Policies
+      // Test 7: RLS Policies
       const { data: rlsTest, error: rlsError } = await supabase
         .from('user_posts')
         .select('id')
@@ -106,7 +122,7 @@ const DatabaseTest: React.FC = () => {
         addResult('RLS Policies', 'success', 'RLS policies working correctly');
       }
 
-      // Test 7: Media Storage
+      // Test 8: Media Storage
       const { data: buckets, error: storageError } = await supabase.storage.listBuckets();
       
       if (storageError) {
@@ -116,8 +132,18 @@ const DatabaseTest: React.FC = () => {
         if (mediaBucket) {
           addResult('Storage', 'success', 'Media bucket found and accessible');
         } else {
-          addResult('Storage', 'warning', 'Media bucket not found');
+          addResult('Storage', 'warning', 'Media bucket not found - media uploads may fail');
         }
+      }
+
+      // Test 9: Environment Variables
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        addResult('Environment Variables', 'error', 'Missing Supabase environment variables');
+      } else {
+        addResult('Environment Variables', 'success', `Supabase URL: ${supabaseUrl.substring(0, 30)}...`);
       }
 
     } catch (error) {
@@ -185,6 +211,26 @@ const DatabaseTest: React.FC = () => {
     }
   };
 
+  const addDemoProfiles = async () => {
+    setLoading(true);
+    addResult('Add Demo Profiles', 'success', 'Adding demo profiles...');
+
+    try {
+      const result = await insertDemoProfiles();
+      
+      if (result.success) {
+        addResult('Add Demo Profiles', 'success', 'Demo profiles added successfully!');
+        runTests(); // Refresh all tests
+      } else {
+        addResult('Add Demo Profiles', 'error', `Failed to add demo profiles: ${result.error}`);
+      }
+    } catch (error) {
+      addResult('Add Demo Profiles', 'error', `Unexpected error: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     runTests();
   }, []);
@@ -207,14 +253,15 @@ const DatabaseTest: React.FC = () => {
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center">
           <Database className="h-6 w-6 mr-2" />
-          Database Connection Test
+          Comprehensive Database Test
         </h2>
         <button
           onClick={runTests}
           disabled={loading}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
         >
-          {loading ? 'Testing...' : 'Run Tests'}
+          <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          <span>{loading ? 'Testing...' : 'Run Tests'}</span>
         </button>
       </div>
 
@@ -227,6 +274,30 @@ const DatabaseTest: React.FC = () => {
             <p><strong>Name:</strong> {user.name}</p>
             <p><strong>Email:</strong> {user.email}</p>
             <p><strong>Role:</strong> {user.role}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions */}
+      {profiles.length === 0 && (
+        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+          <div className="flex items-start space-x-3">
+            <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                No Profiles Found
+              </h4>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                Your profiles table is empty. This is why posts aren't working. Add demo profiles to fix this.
+              </p>
+              <button
+                onClick={addDemoProfiles}
+                disabled={loading}
+                className="mt-3 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
+              >
+                {loading ? 'Adding Profiles...' : 'Add Demo Profiles'}
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -258,7 +329,7 @@ const DatabaseTest: React.FC = () => {
                     <summary className="text-xs text-gray-500 cursor-pointer">
                       View Data
                     </summary>
-                    <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 overflow-auto">
+                    <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 overflow-auto max-h-40">
                       {JSON.stringify(result.data, null, 2)}
                     </pre>
                   </details>
@@ -268,6 +339,33 @@ const DatabaseTest: React.FC = () => {
           </div>
         ))}
       </div>
+
+      {/* Profiles in Database */}
+      {profiles.length > 0 && (
+        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <h3 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+            <Users className="h-5 w-5 mr-2" />
+            Profiles in Database ({profiles.length})
+          </h3>
+          <div className="space-y-2">
+            {profiles.map((profile) => (
+              <div
+                key={profile.id}
+                className="p-2 bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-600"
+              >
+                <div className="text-sm">
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    {profile.full_name} ({profile.role})
+                  </p>
+                  <p className="text-gray-500 dark:text-gray-400">
+                    {profile.email} • ID: {profile.id}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Test Post Creation */}
       <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -285,12 +383,17 @@ const DatabaseTest: React.FC = () => {
           />
           <button
             onClick={testCreatePost}
-            disabled={loading || !testPost.trim()}
+            disabled={loading || !testPost.trim() || !user}
             className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
           >
             Create Test Post
           </button>
         </div>
+        {!user && (
+          <p className="text-sm text-red-600 dark:text-red-400 mt-2">
+            Please log in to test post creation
+          </p>
+        )}
       </div>
 
       {/* Existing Posts */}
