@@ -50,6 +50,49 @@ export const useAuth = () => {
   return context;
 };
 
+// Demo users with valid UUIDs
+const demoUsers = {
+  'admin@pineappl.edu': {
+    id: '550e8400-e29b-41d4-a716-446655440001',
+    name: 'Admin User',
+    email: 'admin@pineappl.edu',
+    role: 'admin' as UserRole,
+    department: 'Administration',
+    faculty: 'Administration',
+    avatarUrl: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
+    bio: 'University administrator.',
+    phone: '+234 801 234 5678',
+    address: 'Admin Block',
+    dateOfBirth: '1985-05-15'
+  },
+  'lecturer@pineappl.edu': {
+    id: '550e8400-e29b-41d4-a716-446655440002',
+    name: 'Dr. Sarah Wilson',
+    email: 'lecturer@pineappl.edu',
+    role: 'lecturer' as UserRole,
+    department: 'Computer Science',
+    faculty: 'COPAS',
+    avatarUrl: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg',
+    bio: 'Lecturer in AI.',
+    phone: '+234 802 345 6789',
+    address: 'Faculty Housing',
+    dateOfBirth: '1980-08-22'
+  },
+  'student@pineappl.edu': {
+    id: '550e8400-e29b-41d4-a716-446655440003',
+    name: 'John Student',
+    email: 'student@pineappl.edu',
+    role: 'student' as UserRole,
+    department: 'Computer Science',
+    faculty: 'COPAS',
+    avatarUrl: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
+    bio: 'CS Student.',
+    phone: '+234 803 456 7890',
+    address: 'Student Hostel',
+    dateOfBirth: '2000-03-10'
+  }
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,7 +107,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (session) {
           const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select(`id, email, full_name, role, bio, phone, address, date_of_birth, avatar_url, departments(name), faculties(name)`)  
+            .select(`
+              id, email, full_name, role, bio, phone, address, date_of_birth, avatar_url,
+              departments(name), faculties(name)
+            `)  
             .eq('id', session.user.id)
             .single();
 
@@ -98,79 +144,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     checkSession();
-  }, []);
 
-  const signIn = async (email: string, password: string) => {
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-
-      if (error) {
-        const demoId = uuidv4();
-        let demoUser: User;
-
-        if (email.includes('admin')) {
-          demoUser = {
-            id: demoId,
-            name: 'Admin User',
-            email,
-            role: 'admin',
-            department: 'Administration',
-            faculty: 'Administration',
-            avatarUrl: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg',
-            bio: 'University administrator.',
-            phone: '+234 801 234 5678',
-            address: 'Admin Block',
-            dateOfBirth: '1985-05-15'
-          };
-        } else if (email.includes('lecturer')) {
-          demoUser = {
-            id: demoId,
-            name: 'Dr. Sarah Wilson',
-            email,
-            role: 'lecturer',
-            department: 'Computer Science',
-            faculty: 'COPAS',
-            avatarUrl: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg',
-            bio: 'Lecturer in AI.',
-            phone: '+234 802 345 6789',
-            address: 'Faculty Housing',
-            dateOfBirth: '1980-08-22'
-          };
-        } else {
-          demoUser = {
-            id: demoId,
-            name: 'John Student',
-            email,
-            role: 'student',
-            department: 'Computer Science',
-            faculty: 'COPAS',
-            avatarUrl: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg',
-            bio: 'CS Student.',
-            phone: '+234 803 456 7890',
-            address: 'Student Hostel',
-            dateOfBirth: '2000-03-10'
-          };
-        }
-
-        localStorage.setItem('pineappl_user', JSON.stringify(demoUser));
-        setUser(demoUser);
-        setLoading(false);
-        return { error: null };
-      }
-
-      if (data.user) {
-        const { data: profile, error: profileError } = await supabase
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        const { data: profile } = await supabase
           .from('profiles')
-          .select(`id, email, full_name, role, bio, phone, address, date_of_birth, avatar_url, departments(name), faculties(name)`)
-          .eq('id', data.user.id)
+          .select(`
+            id, email, full_name, role, bio, phone, address, date_of_birth, avatar_url,
+            departments(name), faculties(name)
+          `)
+          .eq('id', session.user.id)
           .single();
-
-        if (profileError) {
-          setLoading(false);
-          return { error: profileError };
-        }
 
         if (profile) {
           const userProfile: User = {
@@ -186,9 +171,100 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             address: profile.address,
             dateOfBirth: profile.date_of_birth
           };
-
-          localStorage.setItem('pineappl_user', JSON.stringify(userProfile));
           setUser(userProfile);
+          localStorage.setItem('pineappl_user', JSON.stringify(userProfile));
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        localStorage.removeItem('pineappl_user');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signIn = async (email: string, password: string) => {
+    setLoading(true);
+
+    try {
+      // Check if it's a demo user first
+      if (demoUsers[email as keyof typeof demoUsers]) {
+        const demoUser = demoUsers[email as keyof typeof demoUsers];
+        localStorage.setItem('pineappl_user', JSON.stringify(demoUser));
+        setUser(demoUser);
+        setLoading(false);
+        return { error: null };
+      }
+
+      // Try Supabase authentication
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        setLoading(false);
+        return { error };
+      }
+
+      // User profile will be set by the auth state change listener
+      setLoading(false);
+      return { error: null };
+    } catch (error) {
+      setLoading(false);
+      return { error };
+    }
+  };
+
+  const signUp = async (signupData: any) => {
+    setLoading(true);
+
+    try {
+      // Create auth user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: signupData.email,
+        password: signupData.password,
+      });
+
+      if (authError) {
+        setLoading(false);
+        return { error: authError };
+      }
+
+      if (authData.user) {
+        // Get faculty and department IDs
+        const { data: facultyData } = await supabase
+          .from('faculties')
+          .select('id')
+          .eq('name', signupData.faculty_id)
+          .single();
+
+        const { data: departmentData } = await supabase
+          .from('departments')
+          .select('id')
+          .eq('name', signupData.department_id)
+          .single();
+
+        // Create profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: signupData.email,
+            full_name: signupData.full_name,
+            username: signupData.username,
+            role: signupData.role,
+            date_of_birth: signupData.date_of_birth,
+            phone: signupData.phone,
+            address: signupData.address,
+            faculty_id: facultyData?.id,
+            department_id: departmentData?.id,
+            matric_number: signupData.role === 'student' ? signupData.matric_number : null,
+            staff_id: signupData.role !== 'student' ? signupData.staff_id : null,
+            bio: `${signupData.role} at ${signupData.department_id}`,
+            is_verified: false
+          });
+
+        if (profileError) {
+          setLoading(false);
+          return { error: profileError };
         }
       }
 
@@ -206,10 +282,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
   };
 
-  const signUp = async (data: any) => {
-    return { error: null }; // Extend as needed
-  };
-
   const switchRole = (role: UserRole) => {
     if (user) {
       const updatedUser = { ...user, role };
@@ -223,6 +295,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const updatedUser = { ...user, ...data };
       setUser(updatedUser);
       localStorage.setItem('pineappl_user', JSON.stringify(updatedUser));
+
+      // Update in Supabase if user is authenticated
+      if (user.id && !demoUsers[user.email as keyof typeof demoUsers]) {
+        await supabase
+          .from('profiles')
+          .update({
+            full_name: data.name,
+            phone: data.phone,
+            address: data.address,
+            date_of_birth: data.dateOfBirth,
+            bio: data.bio,
+            avatar_url: data.avatarUrl
+          })
+          .eq('id', user.id);
+      }
     }
   };
 

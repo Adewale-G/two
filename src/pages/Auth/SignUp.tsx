@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, School, ArrowRight, Calendar, User, Mail, Phone, MapPin, GraduationCap, Building } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabase';
 
 interface Faculty {
   id: string;
@@ -59,44 +60,67 @@ const SignUp: React.FC = () => {
   }, [formData.faculty_id]);
 
   const fetchFaculties = async () => {
-    // Mock faculties for demo
-    const mockFaculties = [
-      { id: '1', name: 'COPAS', full_name: 'College of Pure and Applied Sciences' },
-      { id: '2', name: 'COLENSMA', full_name: 'College of Environmental Sciences and Management' },
-      { id: '3', name: 'CASMAS', full_name: 'College of Art, Social, and Management Science' },
-      { id: '4', name: 'COLAW', full_name: 'College of Law' },
-      { id: '5', name: 'NURSING', full_name: 'College of Nursing and Basic Medical Sciences' }
-    ];
-    setFaculties(mockFaculties);
+    try {
+      const { data, error } = await supabase
+        .from('faculties')
+        .select('id, name, full_name')
+        .order('name');
+
+      if (error) throw error;
+      setFaculties(data || []);
+    } catch (error) {
+      console.error('Error fetching faculties:', error);
+      // Fallback to mock data
+      const mockFaculties = [
+        { id: '1', name: 'COPAS', full_name: 'College of Pure and Applied Sciences' },
+        { id: '2', name: 'COLENSMA', full_name: 'College of Environmental Sciences and Management' },
+        { id: '3', name: 'CASMAS', full_name: 'College of Art, Social, and Management Science' },
+        { id: '4', name: 'COLAW', full_name: 'College of Law' },
+        { id: '5', name: 'NURSING', full_name: 'College of Nursing and Basic Medical Sciences' }
+      ];
+      setFaculties(mockFaculties);
+    }
   };
 
   const fetchDepartments = async (facultyId: string) => {
-    // Mock departments for demo
-    const mockDepartments: Record<string, Department[]> = {
-      '1': [
-        { id: '1', name: 'Computer Science', faculty_id: '1' },
-        { id: '2', name: 'Biochemistry', faculty_id: '1' },
-        { id: '3', name: 'Software Engineering', faculty_id: '1' }
-      ],
-      '2': [
-        { id: '4', name: 'Architecture', faculty_id: '2' },
-        { id: '5', name: 'Estate Management', faculty_id: '2' }
-      ],
-      '3': [
-        { id: '6', name: 'Business Administration', faculty_id: '3' },
-        { id: '7', name: 'Accounting', faculty_id: '3' },
-        { id: '8', name: 'Economics', faculty_id: '3' }
-      ],
-      '4': [
-        { id: '9', name: 'Public and Property Law', faculty_id: '4' },
-        { id: '10', name: 'Private and International Law', faculty_id: '4' }
-      ],
-      '5': [
-        { id: '11', name: 'Nursing Science', faculty_id: '5' },
-        { id: '12', name: 'Human Physiology', faculty_id: '5' }
-      ]
-    };
-    setDepartments(mockDepartments[facultyId] || []);
+    try {
+      const { data, error } = await supabase
+        .from('departments')
+        .select('id, name, faculty_id')
+        .eq('faculty_id', facultyId)
+        .order('name');
+
+      if (error) throw error;
+      setDepartments(data || []);
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      // Fallback to mock data
+      const mockDepartments: Record<string, Department[]> = {
+        '1': [
+          { id: '1', name: 'Computer Science', faculty_id: '1' },
+          { id: '2', name: 'Biochemistry', faculty_id: '1' },
+          { id: '3', name: 'Software Engineering', faculty_id: '1' }
+        ],
+        '2': [
+          { id: '4', name: 'Architecture', faculty_id: '2' },
+          { id: '5', name: 'Estate Management', faculty_id: '2' }
+        ],
+        '3': [
+          { id: '6', name: 'Business Administration', faculty_id: '3' },
+          { id: '7', name: 'Accounting', faculty_id: '3' },
+          { id: '8', name: 'Economics', faculty_id: '3' }
+        ],
+        '4': [
+          { id: '9', name: 'Public and Property Law', faculty_id: '4' },
+          { id: '10', name: 'Private and International Law', faculty_id: '4' }
+        ],
+        '5': [
+          { id: '11', name: 'Nursing Science', faculty_id: '5' },
+          { id: '12', name: 'Human Physiology', faculty_id: '5' }
+        ]
+      };
+      setDepartments(mockDepartments[facultyId] || []);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -175,25 +199,15 @@ const SignUp: React.FC = () => {
     setLoading(true);
     setError('');
 
-    // Add faculty and department names to form data
-    const selectedFaculty = faculties.find(f => f.id === formData.faculty_id);
-    const selectedDepartment = departments.find(d => d.id === formData.department_id);
-
-    const signupData = {
-      ...formData,
-      faculty_name: selectedFaculty?.name,
-      department_name: selectedDepartment?.name
-    };
-
-    const { error } = await signUp(signupData);
+    const { error } = await signUp(formData);
     
     if (error) {
-      setError('Registration failed. Please try again.');
+      setError(error.message || 'Registration failed. Please try again.');
       setLoading(false);
     } else {
-      navigate('/', { 
+      navigate('/signin', { 
         state: { 
-          message: 'Account created successfully! Welcome to Pineappl.' 
+          message: 'Account created successfully! Please sign in with your credentials.' 
         }
       });
     }
@@ -362,8 +376,8 @@ const SignUp: React.FC = () => {
         >
           <option value="">Select Faculty</option>
           {faculties.map(faculty => (
-            <option key={faculty.id} value={faculty.id}>
-              {faculty.name}
+            <option key={faculty.id} value={faculty.name}>
+              {faculty.name} - {faculty.full_name}
             </option>
           ))}
         </select>
@@ -381,7 +395,7 @@ const SignUp: React.FC = () => {
         >
           <option value="">Select Department</option>
           {departments.map(department => (
-            <option key={department.id} value={department.id}>
+            <option key={department.id} value={department.name}>
               {department.name}
             </option>
           ))}
