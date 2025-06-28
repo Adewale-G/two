@@ -94,32 +94,52 @@ const SignUp: React.FC = () => {
       setDepartments(data || []);
     } catch (error) {
       console.error('Error fetching departments:', error);
-      // Fallback to mock data
+      // Fallback to mock data based on faculty name
+      const selectedFaculty = faculties.find(f => f.id === facultyId);
       const mockDepartments: Record<string, Department[]> = {
-        '1': [
-          { id: '1', name: 'Computer Science', faculty_id: '1' },
-          { id: '2', name: 'Biochemistry', faculty_id: '1' },
-          { id: '3', name: 'Software Engineering', faculty_id: '1' }
+        'COPAS': [
+          { id: '1', name: 'Computer Science', faculty_id: facultyId },
+          { id: '2', name: 'Biochemistry', faculty_id: facultyId },
+          { id: '3', name: 'Software Engineering', faculty_id: facultyId },
+          { id: '4', name: 'Cyber Security', faculty_id: facultyId },
+          { id: '5', name: 'Information Systems', faculty_id: facultyId },
+          { id: '6', name: 'Environmental Management and Toxicology', faculty_id: facultyId },
+          { id: '7', name: 'Industrial Chemistry', faculty_id: facultyId },
+          { id: '8', name: 'Microbiology and Industrial Biotechnology', faculty_id: facultyId }
         ],
-        '2': [
-          { id: '4', name: 'Architecture', faculty_id: '2' },
-          { id: '5', name: 'Estate Management', faculty_id: '2' }
+        'COLENSMA': [
+          { id: '9', name: 'Architecture', faculty_id: facultyId },
+          { id: '10', name: 'Estate Management', faculty_id: facultyId }
         ],
-        '3': [
-          { id: '6', name: 'Business Administration', faculty_id: '3' },
-          { id: '7', name: 'Accounting', faculty_id: '3' },
-          { id: '8', name: 'Economics', faculty_id: '3' }
+        'CASMAS': [
+          { id: '11', name: 'Business Administration', faculty_id: facultyId },
+          { id: '12', name: 'Accounting', faculty_id: facultyId },
+          { id: '13', name: 'Economics', faculty_id: facultyId },
+          { id: '14', name: 'Mass Communication', faculty_id: facultyId },
+          { id: '15', name: 'Psychology', faculty_id: facultyId },
+          { id: '16', name: 'Banking and Finance', faculty_id: facultyId },
+          { id: '17', name: 'Criminology and Security Studies', faculty_id: facultyId },
+          { id: '18', name: 'International Relations', faculty_id: facultyId },
+          { id: '19', name: 'Peace Studies and Conflict Resolution', faculty_id: facultyId },
+          { id: '20', name: 'Political Science', faculty_id: facultyId },
+          { id: '21', name: 'Public Administration', faculty_id: facultyId },
+          { id: '22', name: 'Taxation', faculty_id: facultyId }
         ],
-        '4': [
-          { id: '9', name: 'Public and Property Law', faculty_id: '4' },
-          { id: '10', name: 'Private and International Law', faculty_id: '4' }
+        'COLAW': [
+          { id: '23', name: 'Public and Property Law', faculty_id: facultyId },
+          { id: '24', name: 'Private and International Law', faculty_id: facultyId }
         ],
-        '5': [
-          { id: '11', name: 'Nursing Science', faculty_id: '5' },
-          { id: '12', name: 'Human Physiology', faculty_id: '5' }
+        'NURSING': [
+          { id: '25', name: 'Maternal and Child Health Nursing', faculty_id: facultyId },
+          { id: '26', name: 'Community and Public Health Nursing', faculty_id: facultyId },
+          { id: '27', name: 'Adult Health/Medical and Surgical Nursing', faculty_id: facultyId },
+          { id: '28', name: 'Mental Health and Psychiatric Nursing', faculty_id: facultyId },
+          { id: '29', name: 'Nursing Management and Education', faculty_id: facultyId },
+          { id: '30', name: 'Human Physiology', faculty_id: facultyId },
+          { id: '31', name: 'Human Anatomy', faculty_id: facultyId }
         ]
       };
-      setDepartments(mockDepartments[facultyId] || []);
+      setDepartments(mockDepartments[selectedFaculty?.name || ''] || []);
     }
   };
 
@@ -376,7 +396,7 @@ const SignUp: React.FC = () => {
         >
           <option value="">Select Faculty</option>
           {faculties.map(faculty => (
-            <option key={faculty.id} value={faculty.name}>
+            <option key={faculty.id} value={faculty.id}>
               {faculty.name} - {faculty.full_name}
             </option>
           ))}
@@ -395,7 +415,7 @@ const SignUp: React.FC = () => {
         >
           <option value="">Select Department</option>
           {departments.map(department => (
-            <option key={department.id} value={department.name}>
+            <option key={department.id} value={department.id}>
               {department.name}
             </option>
           ))}
@@ -433,7 +453,23 @@ const SignUp: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100 dark:bg-gray-900">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100 dark:bg-gray-900 relative">
+      {/* Bolt Logo - Top Right */}
+      <div className="absolute top-4 right-4">
+        <a 
+          href="https://bolt.new/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="block hover:scale-105 transition-transform"
+        >
+          <img 
+            src="/black_circle_360x360.png" 
+            alt="Powered by Bolt" 
+            className="w-12 h-12 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+          />
+        </a>
+      </div>
+
       {/* Sign Up Card */}
       <div className="w-full max-w-sm">
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-lg border border-gray-200 dark:border-gray-700">

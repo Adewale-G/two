@@ -229,19 +229,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (authData.user) {
-        // Get faculty and department IDs
-        const { data: facultyData } = await supabase
-          .from('faculties')
-          .select('id')
-          .eq('name', signupData.faculty_id)
-          .single();
-
-        const { data: departmentData } = await supabase
-          .from('departments')
-          .select('id')
-          .eq('name', signupData.department_id)
-          .single();
-
         // Create profile
         const { error: profileError } = await supabase
           .from('profiles')
@@ -254,11 +241,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             date_of_birth: signupData.date_of_birth,
             phone: signupData.phone,
             address: signupData.address,
-            faculty_id: facultyData?.id,
-            department_id: departmentData?.id,
+            faculty_id: signupData.faculty_id,
+            department_id: signupData.department_id,
             matric_number: signupData.role === 'student' ? signupData.matric_number : null,
             staff_id: signupData.role !== 'student' ? signupData.staff_id : null,
-            bio: `${signupData.role} at ${signupData.department_id}`,
+            bio: `${signupData.role} at the university`,
             is_verified: false
           });
 
