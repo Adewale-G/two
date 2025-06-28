@@ -9,7 +9,8 @@ import {
   X,
   School,
   Rss,
-  UserCheck
+  UserCheck,
+  Bug
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import Avatar from '../Common/Avatar';
@@ -34,6 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, currentPage, onPage
     { id: 'feed', icon: Rss, label: 'Feed' },
     { id: 'alumni', icon: UserCheck, label: 'Alumni' },
     { id: 'profile', icon: User, label: 'Profile' },
+    { id: 'debug', icon: Bug, label: 'Debug' },
   ];
 
   const handleNavClick = (pageId: string) => {

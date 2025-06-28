@@ -12,6 +12,7 @@ import FacultyPage from './pages/FacultyPage';
 import Profile from './pages/Profile';
 import Feed from './pages/Feed';
 import Alumni from './pages/Alumni';
+import Debug from './pages/Debug';
 import SignIn from './pages/Auth/SignIn';
 import SignUp from './pages/Auth/SignUp';
 
@@ -57,6 +58,8 @@ const AppContent: React.FC = () => {
         return <Alumni />;
       case 'profile':
         return <Profile />;
+      case 'debug':
+        return <Debug />;
       default:
         return <Home />;
     }
