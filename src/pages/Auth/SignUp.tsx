@@ -73,11 +73,11 @@ const SignUp: React.FC = () => {
       console.error('Error fetching faculties:', error);
       // Fallback to mock data
       const mockFaculties = [
-        { id: '1', name: 'COPAS', full_name: 'College of Pure and Applied Sciences' },
-        { id: '2', name: 'COLENSMA', full_name: 'College of Environmental Sciences and Management' },
-        { id: '3', name: 'CASMAS', full_name: 'College of Art, Social, and Management Science' },
-        { id: '4', name: 'COLAW', full_name: 'College of Law' },
-        { id: '5', name: 'NURSING', full_name: 'College of Nursing and Basic Medical Sciences' }
+        { id: '550e8400-e29b-41d4-a716-446655440010', name: 'COPAS', full_name: 'College of Pure and Applied Sciences' },
+        { id: '550e8400-e29b-41d4-a716-446655440012', name: 'COLENSMA', full_name: 'College of Environmental Sciences and Management' },
+        { id: '550e8400-e29b-41d4-a716-446655440013', name: 'CASMAS', full_name: 'College of Art, Social, and Management Science' },
+        { id: '550e8400-e29b-41d4-a716-446655440014', name: 'COLAW', full_name: 'College of Law' },
+        { id: '550e8400-e29b-41d4-a716-446655440015', name: 'NURSING', full_name: 'College of Nursing and Basic Medical Sciences' }
       ];
       setFaculties(mockFaculties);
     }
@@ -99,45 +99,45 @@ const SignUp: React.FC = () => {
       const selectedFaculty = faculties.find(f => f.id === facultyId);
       const mockDepartments: Record<string, Department[]> = {
         'COPAS': [
-          { id: '1', name: 'Computer Science', faculty_id: facultyId },
-          { id: '2', name: 'Biochemistry', faculty_id: facultyId },
-          { id: '3', name: 'Software Engineering', faculty_id: facultyId },
-          { id: '4', name: 'Cyber Security', faculty_id: facultyId },
-          { id: '5', name: 'Information Systems', faculty_id: facultyId },
-          { id: '6', name: 'Environmental Management and Toxicology', faculty_id: facultyId },
-          { id: '7', name: 'Industrial Chemistry', faculty_id: facultyId },
-          { id: '8', name: 'Microbiology and Industrial Biotechnology', faculty_id: facultyId }
+          { id: '550e8400-e29b-41d4-a716-446655440020', name: 'Computer Science', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440022', name: 'Biochemistry', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440023', name: 'Cyber Security', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440024', name: 'Software Engineering', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440025', name: 'Information Systems', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440026', name: 'Environmental Management and Toxicology', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440027', name: 'Industrial Chemistry', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440028', name: 'Microbiology and Industrial Biotechnology', faculty_id: facultyId }
         ],
         'COLENSMA': [
-          { id: '9', name: 'Architecture', faculty_id: facultyId },
-          { id: '10', name: 'Estate Management', faculty_id: facultyId }
+          { id: '550e8400-e29b-41d4-a716-446655440029', name: 'Architecture', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440030', name: 'Estate Management', faculty_id: facultyId }
         ],
         'CASMAS': [
-          { id: '11', name: 'Business Administration', faculty_id: facultyId },
-          { id: '12', name: 'Accounting', faculty_id: facultyId },
-          { id: '13', name: 'Economics', faculty_id: facultyId },
-          { id: '14', name: 'Mass Communication', faculty_id: facultyId },
-          { id: '15', name: 'Psychology', faculty_id: facultyId },
-          { id: '16', name: 'Banking and Finance', faculty_id: facultyId },
-          { id: '17', name: 'Criminology and Security Studies', faculty_id: facultyId },
-          { id: '18', name: 'International Relations', faculty_id: facultyId },
-          { id: '19', name: 'Peace Studies and Conflict Resolution', faculty_id: facultyId },
-          { id: '20', name: 'Political Science', faculty_id: facultyId },
-          { id: '21', name: 'Public Administration', faculty_id: facultyId },
-          { id: '22', name: 'Taxation', faculty_id: facultyId }
+          { id: '550e8400-e29b-41d4-a716-446655440031', name: 'Business Administration', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440032', name: 'Accounting', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440033', name: 'Economics', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440034', name: 'Mass Communication', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440035', name: 'Psychology', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440036', name: 'Banking and Finance', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440037', name: 'Criminology and Security Studies', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440038', name: 'International Relations', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440039', name: 'Peace Studies and Conflict Resolution', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440040', name: 'Political Science', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440041', name: 'Public Administration', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440042', name: 'Taxation', faculty_id: facultyId }
         ],
         'COLAW': [
-          { id: '23', name: 'Public and Property Law', faculty_id: facultyId },
-          { id: '24', name: 'Private and International Law', faculty_id: facultyId }
+          { id: '550e8400-e29b-41d4-a716-446655440043', name: 'Public and Property Law', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440044', name: 'Private and International Law', faculty_id: facultyId }
         ],
         'NURSING': [
-          { id: '25', name: 'Maternal and Child Health Nursing', faculty_id: facultyId },
-          { id: '26', name: 'Community and Public Health Nursing', faculty_id: facultyId },
-          { id: '27', name: 'Adult Health/Medical and Surgical Nursing', faculty_id: facultyId },
-          { id: '28', name: 'Mental Health and Psychiatric Nursing', faculty_id: facultyId },
-          { id: '29', name: 'Nursing Management and Education', faculty_id: facultyId },
-          { id: '30', name: 'Human Physiology', faculty_id: facultyId },
-          { id: '31', name: 'Human Anatomy', faculty_id: facultyId }
+          { id: '550e8400-e29b-41d4-a716-446655440045', name: 'Maternal and Child Health Nursing', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440046', name: 'Community and Public Health Nursing', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440047', name: 'Adult Health/Medical and Surgical Nursing', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440048', name: 'Mental Health and Psychiatric Nursing', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440049', name: 'Nursing Management and Education', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440050', name: 'Human Physiology', faculty_id: facultyId },
+          { id: '550e8400-e29b-41d4-a716-446655440051', name: 'Human Anatomy', faculty_id: facultyId }
         ]
       };
       setDepartments(mockDepartments[selectedFaculty?.name || ''] || []);
