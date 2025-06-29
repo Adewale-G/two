@@ -1,5 +1,4 @@
 
-import Logo from '../../components/Layout/Logo';
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, School, ArrowRight, Calendar, User, Mail, Phone, MapPin, GraduationCap, Building } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
