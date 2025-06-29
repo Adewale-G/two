@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff, School, ArrowRight, Calendar, User, Mail, Phone, MapPin, GraduationCap, Building } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import Logo from '../../components/Layout/Logo';
 import { supabase } from '../../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -580,10 +581,8 @@ const SignUp: React.FC = () => {
         <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 shadow-lg border border-gray-200 dark:border-gray-700">
           {/* Header */}
           <div className="text-center mb-3">
-            <div className="flex items-center justify-center mb-2">
-              <div className="w-8 h-8 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
-                <School className="h-5 w-5 text-white" />
-              </div>
+            <div className="flex items-center justify-center mb-3">
+              <Logo size="md" />
             </div>
             <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-1">Pineappl</h1>
             <p className="text-gray-600 dark:text-gray-400 text-xs">Academic Performance Platform</p>
