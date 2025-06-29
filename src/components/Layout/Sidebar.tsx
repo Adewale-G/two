@@ -123,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, currentPage, onPage
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="text-xs text-gray-500 text-center">
-              © 2024 Pineappl Platform
+              © 2025 Pineappl Platform
             </div>
             <a 
               href="https://bolt.new/" 

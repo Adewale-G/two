@@ -3,6 +3,7 @@ import { Eye, EyeOff, School, ArrowRight, Calendar, User, Mail, Phone, MapPin, G
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import Logo from '../../components/Layout/Logo';
 
 interface Faculty {
   id: string;
@@ -476,9 +477,7 @@ const SignUp: React.FC = () => {
           {/* Header */}
           <div className="text-center mb-4">
             <div className="flex items-center justify-center mb-2">
-              <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center">
-                <School className="h-6 w-6 text-white" />
-              </div>
+              <Logo size="md" />
             </div>
             <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Pineappl</h1>
             <p className="text-gray-600 dark:text-gray-400 text-xs">Academic Performance Platform</p>

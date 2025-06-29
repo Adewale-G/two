@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Database, Users, FileText, AlertCircle, CheckCircle, RefreshCw, Bug } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { Database, Users, FileText, AlertCircle, CheckCircle, XCircle, RefreshCw, Bug } from 'lucide-react';
+import { supabase, testConnection, insertDemoProfiles } from '../lib/supabase';
 import Card from '../components/Common/Card';
+import { useAuth } from '../contexts/AuthContext';
 
 const DebugPage: React.FC = () => {
+  const { user } = useAuth();
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'error'>('checking');
   const [dbStats, setDbStats] = useState({
     profiles: 0,
@@ -14,11 +16,16 @@ const DebugPage: React.FC = () => {
   });
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<any[]>([]);
+  const [testPost, setTestPost] = useState('');
+  const [posts, setPosts] = useState<any[]>([]);
+  const [profiles, setProfiles] = useState<any[]>([]);
 
   useEffect(() => {
     checkConnection();
     fetchStats();
     fetchRecentActivity();
+    runTests();
   }, []);
 
   const checkConnection = async () => {
@@ -77,55 +84,241 @@ const DebugPage: React.FC = () => {
     }
   };
 
+  const addResult = (test: string, status: 'success' | 'error' | 'warning', message: string, data?: any) => {
+    setResults(prev => [...prev, { test, status, message, data }]);
+  };
+
+  const runTests = async () => {
+    setResults([]);
+    setLoading(true);
+
+    try {
+      // Test 1: Basic Database Connection
+      addResult('Database Connection', 'success', 'Testing Supabase connection...');
+      
+      const connectionTest = await testConnection();
+      if (!connectionTest.success) {
+        addResult('Database Connection', 'error', `Connection failed: ${connectionTest.error}`);
+        setLoading(false);
+        return;
+      } else {
+        addResult('Database Connection', 'success', 'Successfully connected to Supabase');
+      }
+
+      // Test 2: User Authentication Status
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        addResult('Authentication', 'success', `Authenticated as: ${session.user.email}`);
+      } else if (user) {
+        addResult('Authentication', 'warning', `Using demo user: ${user.email} (ID: ${user.id})`);
+      } else {
+        addResult('Authentication', 'error', 'No user authenticated');
+      }
+
+      // Test 3: Check Profiles Table
+      const { data: allProfiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (profilesError) {
+        addResult('Profiles Table', 'error', `Profiles table error: ${profilesError.message}`);
+      } else {
+        addResult('Profiles Table', 'success', `Found ${allProfiles?.length || 0} profiles in database`);
+        setProfiles(allProfiles || []);
+        
+        if (allProfiles && allProfiles.length === 0) {
+          addResult('Profiles Table', 'warning', 'Profiles table is empty - demo users not found');
+        }
+      }
+
+      // Test 4: Check Current User Profile
+      if (user) {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          addResult('Current User Profile', 'warning', `Profile not found in database: ${profileError.message}`);
+        } else {
+          addResult('Current User Profile', 'success', `Profile found: ${profile.full_name}`, profile);
+        }
+      }
+
+      // Test 5: Posts Table Structure
+      const { data: postsStructure, error: structureError } = await supabase
+        .from('user_posts')
+        .select('*')
+        .limit(1);
+
+      if (structureError) {
+        addResult('Posts Table', 'error', `Posts table error: ${structureError.message}`);
+      } else {
+        addResult('Posts Table', 'success', 'Posts table accessible');
+      }
+
+      // Test 6: Fetch Existing Posts
+      const { data: existingPosts, error: fetchError } = await supabase
+        .from('user_posts')
+        .select(`
+          *,
+          profiles!user_posts_author_id_fkey(id, full_name, role, avatar_url)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (fetchError) {
+        addResult('Fetch Posts', 'error', `Failed to fetch posts: ${fetchError.message}`);
+      } else {
+        addResult('Fetch Posts', 'success', `Found ${existingPosts?.length || 0} posts`);
+        setPosts(existingPosts || []);
+      }
+
+      // Test 7: RLS Policies
+      const { data: rlsTest, error: rlsError } = await supabase
+        .from('user_posts')
+        .select('id')
+        .limit(1);
+
+      if (rlsError) {
+        addResult('RLS Policies', 'error', `RLS policy error: ${rlsError.message}`);
+      } else {
+        addResult('RLS Policies', 'success', 'RLS policies working correctly');
+      }
+
+      // Test 8: Media Storage
+      const { data: buckets, error: storageError } = await supabase.storage.listBuckets();
+      
+      if (storageError) {
+        addResult('Storage', 'error', `Storage error: ${storageError.message}`);
+      } else {
+        const mediaBucket = buckets?.find(b => b.name === 'media');
+        if (mediaBucket) {
+          addResult('Storage', 'success', 'Media bucket found and accessible');
+        } else {
+          addResult('Storage', 'warning', 'Media bucket not found - media uploads may fail');
+        }
+      }
+
+      // Test 9: Environment Variables
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+      
+      if (!supabaseUrl || !supabaseKey) {
+        addResult('Environment Variables', 'error', 'Missing Supabase environment variables');
+      } else {
+        addResult('Environment Variables', 'success', `Supabase URL: ${supabaseUrl.substring(0, 30)}...`);
+      }
+
+    } catch (error) {
+      addResult('General Error', 'error', `Unexpected error: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const refreshData = async () => {
     setLoading(true);
     await Promise.all([
       checkConnection(),
       fetchStats(),
-      fetchRecentActivity()
+      fetchRecentActivity(),
+      runTests()
     ]);
     setLoading(false);
   };
 
-  const testDatabaseOperations = async () => {
+  const testCreatePost = async () => {
+    if (!testPost.trim()) {
+      alert('Please enter test post content');
+      return;
+    }
+
+    if (!user) {
+      alert('Please log in to test post creation');
+      return;
+    }
+
     setLoading(true);
+    addResult('Create Post Test', 'success', 'Attempting to create test post...');
+
     try {
-      // Test insert
-      const { data: testPost, error: insertError } = await supabase
+      const { data, error } = await supabase
         .from('user_posts')
         .insert({
-          author_id: '550e8400-e29b-41d4-a716-446655440001',
-          content: `Debug test post - ${new Date().toISOString()}`,
-          type: 'text'
+          content: testPost,
+          type: 'text',
+          author_id: user.id,
         })
         .select()
         .single();
 
-      if (insertError) throw insertError;
+      if (error) {
+        addResult('Create Post Test', 'error', `Failed to create post: ${error.message}`, error);
+      } else {
+        addResult('Create Post Test', 'success', 'Post created successfully!', data);
+        setTestPost('');
+        // Refresh posts
+        refreshData();
+      }
+    } catch (error) {
+      addResult('Create Post Test', 'error', `Unexpected error: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // Test update
-      const { error: updateError } = await supabase
-        .from('user_posts')
-        .update({ content: `Updated debug test post - ${new Date().toISOString()}` })
-        .eq('id', testPost.id);
-
-      if (updateError) throw updateError;
-
-      // Test delete
-      const { error: deleteError } = await supabase
+  const deleteTestPost = async (postId: string) => {
+    try {
+      const { error } = await supabase
         .from('user_posts')
         .delete()
-        .eq('id', testPost.id);
+        .eq('id', postId);
 
-      if (deleteError) throw deleteError;
-
-      alert('Database operations test completed successfully!');
-      await refreshData();
+      if (error) {
+        addResult('Delete Post', 'error', `Failed to delete post: ${error.message}`);
+      } else {
+        addResult('Delete Post', 'success', 'Post deleted successfully');
+        refreshData(); // Refresh
+      }
     } catch (error) {
-      console.error('Database test error:', error);
-      alert(`Database test failed: ${error.message}`);
+      addResult('Delete Post', 'error', `Unexpected error: ${error}`);
     }
-    setLoading(false);
+  };
+
+  const addDemoProfiles = async () => {
+    setLoading(true);
+    addResult('Add Demo Profiles', 'success', 'Adding demo profiles...');
+
+    try {
+      const result = await insertDemoProfiles();
+      
+      if (result.success) {
+        addResult('Add Demo Profiles', 'success', 'Demo profiles added successfully!');
+        refreshData(); // Refresh all tests
+      } else {
+        addResult('Add Demo Profiles', 'error', `Failed to add demo profiles: ${result.error}`);
+      }
+    } catch (error) {
+      addResult('Add Demo Profiles', 'error', `Unexpected error: ${error}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'success':
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
+      case 'error':
+        return <XCircle className="h-5 w-5 text-red-500" />;
+      case 'warning':
+        return <AlertCircle className="h-5 w-5 text-yellow-500" />;
+      default:
+        return <Database className="h-5 w-5 text-gray-500" />;
+    }
   };
 
   return (
@@ -178,7 +371,7 @@ const DebugPage: React.FC = () => {
       </Card>
 
       {/* Database Statistics */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6 mt-6">
         <Card>
           <div className="flex items-center justify-between">
             <div>
@@ -230,20 +423,107 @@ const DebugPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Test Operations */}
-      <Card title="Database Operations Test">
-        <div className="space-y-4">
-          <p className="text-gray-600 dark:text-gray-400">
-            Test database CRUD operations to verify everything is working correctly.
-          </p>
+      {/* Current User Info */}
+      {user && (
+        <Card title="Current User" className="mb-6">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            <p><strong>ID:</strong> {user.id}</p>
+            <p><strong>Name:</strong> {user.name}</p>
+            <p><strong>Email:</strong> {user.email}</p>
+            <p><strong>Role:</strong> {user.role}</p>
+          </div>
+        </Card>
+      )}
+
+      {/* Quick Actions */}
+      {profiles.length === 0 && (
+        <Card className="mb-6">
+          <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div className="flex-1">
+                <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                  No Profiles Found
+                </h4>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                  Your profiles table is empty. This is why posts aren't working. Add demo profiles to fix this.
+                </p>
+                <button
+                  onClick={addDemoProfiles}
+                  disabled={loading}
+                  className="mt-3 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 disabled:opacity-50"
+                >
+                  {loading ? 'Adding Profiles...' : 'Add Demo Profiles'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Test Results */}
+      <Card title="Test Results" className="mb-6">
+        <div className="space-y-3">
+          {results.map((result, index) => (
+            <div
+              key={index}
+              className={`p-4 rounded-lg border-l-4 ${
+                result.status === 'success'
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-500'
+                  : result.status === 'error'
+                  ? 'bg-red-50 dark:bg-red-900/20 border-red-500'
+                  : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500'
+              }`}
+            >
+              <div className="flex items-start space-x-3">
+                {getStatusIcon(result.status)}
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 dark:text-white">
+                    {result.test}
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {result.message}
+                  </p>
+                  {result.data && (
+                    <details className="mt-2">
+                      <summary className="text-xs text-gray-500 cursor-pointer">
+                        View Data
+                      </summary>
+                      <pre className="text-xs bg-gray-100 dark:bg-gray-800 p-2 rounded mt-1 overflow-auto max-h-40">
+                        {JSON.stringify(result.data, null, 2)}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Test Post Creation */}
+      <Card title="Test Post Creation" className="mb-6">
+        <div className="flex space-x-3">
+          <input
+            type="text"
+            value={testPost}
+            onChange={(e) => setTestPost(e.target.value)}
+            placeholder="Enter test post content..."
+            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+          />
           <button
-            onClick={testDatabaseOperations}
-            disabled={loading || connectionStatus !== 'connected'}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            onClick={testCreatePost}
+            disabled={loading || !testPost.trim() || !user}
+            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
           >
-            {loading ? 'Testing...' : 'Run Database Test'}
+            Create Test Post
           </button>
         </div>
+        {!user && (
+          <p className="text-sm text-red-600 dark:text-red-400 mt-2">
+            Please log in to test post creation
+          </p>
+        )}
       </Card>
 
       {/* Recent Activity */}
