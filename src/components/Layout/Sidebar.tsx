@@ -35,8 +35,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle, currentPage, onPage
     { id: 'feed', icon: Rss, label: 'Feed' },
     { id: 'alumni', icon: UserCheck, label: 'Alumni' },
     { id: 'profile', icon: User, label: 'Profile' },
-    // Only show debug for admin users
-    ...(user?.role === 'admin' ? [{ id: 'debug', icon: Bug, label: 'Debug' }] : []),
+    // Only show debug tab for admin users
+    ...(user?.role === 'admin' ? [{ id: 'debug', icon: Bug, label: 'Debug' }] : [])
   ];
 
   const handleNavClick = (pageId: string) => {

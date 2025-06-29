@@ -12,7 +12,7 @@ import FacultyPage from './pages/FacultyPage';
 import Profile from './pages/Profile';
 import Feed from './pages/Feed';
 import Alumni from './pages/Alumni';
-import Debug from './pages/Debug';
+import DebugPage from './pages/DebugPage';
 import SignIn from './pages/Auth/SignIn';
 import SignUp from './pages/Auth/SignUp';
 
@@ -59,7 +59,8 @@ const AppContent: React.FC = () => {
       case 'profile':
         return <Profile />;
       case 'debug':
-        return <Debug />;
+        // Only allow admin users to access debug page
+        return user?.role === 'admin' ? <DebugPage /> : <Home />;
       default:
         return <Home />;
     }
