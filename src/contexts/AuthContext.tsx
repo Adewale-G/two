@@ -216,8 +216,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             phone: signupData.phone,
             date_of_birth: signupData.date_of_birth,
             address: signupData.address,
-            faculty_name: signupData.faculty_name,
-            department_name: signupData.department_name
+            faculty_name: signupData.faculty_id,
+            department_name: signupData.department_id
           }
         }
       });
