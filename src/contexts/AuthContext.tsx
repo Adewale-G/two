@@ -54,6 +54,38 @@ export const useAuth = () => {
   return context;
 };
 
+export const FACULTY_UUIDS: Record<string, string> = {
+  'NURSING': '506c1822-e45b-4323-ba30-71ef76a22aab',
+  'COPAS': '550e8400-e29b-41d4-a716-446655440010',
+  'ADMINISTRATION': '550e8400-e29b-41d4-a716-446655440011',
+  'COLENSMA': '550e8400-e29b-41d4-a716-446655440012',
+  'CASMAS': '550e8400-e29b-41d4-a716-446655440013',
+  'COLAW': '550e8400-e29b-41d4-a716-446655440014'
+};
+
+const departmentMap: Record<string, string> = {
+  'Computer Science': '2b9b1aea-03a4-423f-ba5d-f464182add0e',
+  'Software Engineering': '3ff418c9-c64c-4e9f-9c02-c8b48dee4474',
+  'Information Systems': '168f87bd-b0d9-495c-a3b7-6673f04998cc',
+  'Cyber Security': '7384bfc3-3729-4fa6-bbeb-6313d9375a0d',
+  'Biochemistry': 'f25fc5c2-0555-4dc2-b95b-50b006828194',
+  'Environmental Management and Toxicology': '5b78b0bf-0e0b-4e5b-b64d-7a0b4836e040',
+  'Industrial Chemistry': '9a1dd610-9d9b-4ebe-b48b-6e1e7779c019',
+  'Mass Communication': '16dfa279-c88a-4181-a6bb-a0dcbac723c8',
+  'Criminology and Security Studies': '199eb28c-a2f8-46ec-a833-2d0ced4c2bc2',
+  'Economics': '52cf1407-daa9-4666-bf85-b41359c6f111',
+  'Psychology': '8051dbd0-9260-4268-84b8-de14d0d133fb',
+  'Public Administration': '3f004636-1e22-428a-a8d2-a8c2e6f3c6c1',
+  'Business Administration': 'a3f7ae2e-d27e-4fcc-bff0-ad9a90a9ab43',
+  'Accounting': 'f90abfdc-79cd-449a-b208-d1e33a955165',
+  'Political Science': '88d489ba-2eaa-4ff4-a40d-216622c6aa03',
+  'Public and Property Law': '63b55431-088b-420f-b643-1404887d3e0e',
+  'Private and International Law': '2b2570fd-ce2c-428e-845d-86e4432e2a8f',
+  'Maternal and Child Health Nursing': '7ad9213d-edea-4e0f-a493-fb7fc7795f0d',
+  'Human Physiology': '4833516d-991a-4e00-b3c3-fb5ad49897ed',
+  'Human Anatomy': '8d8211c1-d228-4b42-822a-36bb7c8e73ff',
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
