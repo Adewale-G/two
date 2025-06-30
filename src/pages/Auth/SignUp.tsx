@@ -545,22 +545,6 @@ const SignUp: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100 dark:bg-gray-900 relative overflow-hidden">
       {/* Logos - Top Right */}
       <div className="absolute top-4 right-4 flex items-center space-x-3">
-        <div className="w-8 h-8 rounded-full overflow-hidden">
-          <img 
-            src="/pineapple.jpeg" 
-            alt="Pineappl Logo" 
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const parent = target.parentElement;
-              if (parent) {
-                parent.classList.add('bg-gradient-to-r', 'from-emerald-500', 'to-teal-600', 'flex', 'items-center', 'justify-center');
-                parent.innerHTML += `<div class="text-white"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg></div>`;
-              }
-            }}
-          />
-        </div>
         <a 
           href="https://bolt.new/" 
           target="_blank" 

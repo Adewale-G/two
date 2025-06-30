@@ -52,7 +52,7 @@ const SignIn: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100 dark:bg-gray-900 relative">
       {/* Bolt Logo - Top Right */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 flex items-center space-x-3">
         <a 
           href="https://bolt.new/" 
           target="_blank" 
