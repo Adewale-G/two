@@ -179,34 +179,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signUp = async (signupData: any) => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: signupData.email,
-        password: signupData.password,
-        options: {
-          data: {
-            full_name: signupData.full_name,
-            role: signupData.role,
-            username: signupData.username,
-            phone: signupData.phone,
-            date_of_birth: signupData.date_of_birth,
-            address: signupData.address,
-            faculty_id: signupData.faculty_id,
-            department_id: signupData.department_id
-          }
-        }
-      });
+  setLoading(true);
 
-      if (error) return { error };
-      return { error: null };
-    } catch (error) {
-      console.error('Signup error:', error);
-      return { error };
-    } finally {
-      setLoading(false);
+  try {
+    const facultyUuid = FACULTY_UUIDS[signupData.faculty];
+    const departmentUuid = DEPARTMENT_UUIDS[signupData.department];
+
+    if (!facultyUuid || !departmentUuid) {
+      throw new Error('Invalid faculty or department selected');
     }
-  };
+
+    const { data, error } = await supabase.auth.signUp({
+      email: signupData.email,
+      password: signupData.password,
+      options: {
+        data: {
+          full_name: signupData.full_name,
+          username: signupData.username,
+          role: signupData.role,
+          phone: signupData.phone,
+          date_of_birth: signupData.date_of_birth,
+          address: signupData.address,
+          faculty_id: facultyUuid,
+          department_id: departmentUuid
+        }
+      }
+    });
+
+    if (error) {
+      console.error('Supabase signup error:', error);
+      setLoading(false);
+      return { error };
+    }
+
+    if (data.user) {
+      console.log('User signed up successfully:', data.user.id);
+    }
+
+    setLoading(false);
+    return { error: null };
+  } catch (error) {
+    console.error('Signup error:', error);
+    setLoading(false);
+    return { error };
+  }
+};
 
   const signOut = async () => {
     await supabase.auth.signOut();
