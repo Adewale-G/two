@@ -63,7 +63,7 @@ export const FACULTY_UUIDS: Record<string, string> = {
   'COLAW': '550e8400-e29b-41d4-a716-446655440014'
 };
 
-const departmentMap: Record<string, string> = {
+const DEPARTMENT_UUIDS: Record<string, string> = {
   'Computer Science': '2b9b1aea-03a4-423f-ba5d-f464182add0e',
   'Software Engineering': '3ff418c9-c64c-4e9f-9c02-c8b48dee4474',
   'Information Systems': '168f87bd-b0d9-495c-a3b7-6673f04998cc',
